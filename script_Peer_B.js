@@ -1,5 +1,113 @@
-// This function prints everything that is to be console logged.
-(function () {
+const offerBox = document.querySelector("#remote_address");
+        const answerBox = document.querySelector("#local_address");
+        const inBox = document.querySelector("#incoming");
+        const outBox = document.querySelector("#outgoing");
+        const confirmButton = document.querySelector(".offer_entered");
+
+       
+        const configuration = { 'iceServers': [
+            {
+                'urls': 'stun:stun.l.google.com:19302'
+            },
+        //      {
+        //       'urls': "turn:openrelay.metered.ca:80",
+        //       'username': "openrelayproject",
+        //       'credential': "openrelayproject",
+        //      },
+        //     {
+        //       'urls': "turn:openrelay.metered.ca:443",
+        //       'username': "openrelayproject",
+        //       'credential': "openrelayproject",
+        //     },
+        //     {
+        //       'urls': "turn:openrelay.metered.ca:443?transport=tcp",
+        //       'username': "openrelayproject",
+        //       'credential': "openrelayproject",
+        //     },
+        //     {
+        //     'url': 'turn:numb.viagenie.ca',
+        //     'credential': 'muazkh',
+        //     'username': 'webrtc@live.com'
+        // },
+        // {
+        //     'url': 'turn:192.158.29.39:3478?transport=udp',
+        //     'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+        //     'username': '28224511:1379330808'
+        // },
+        // {
+        //     'url': 'turn:192.158.29.39:3478?transport=tcp',
+        //     'credential': 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+        //     'username': '28224511:1379330808'
+        // },
+        // {
+        //     'url': 'turn:turn.bistri.com:80',
+        //     'credential': 'homeo',
+        //     'username': 'homeo'
+        //  },
+        //  {
+        //     'url': 'turn:turn.anyfirewall.com:443?transport=tcp',
+        //     'credential': 'webrtc',
+        //     'username': 'webrtc'
+        // }
+          ] };
+        const localConnection = new RTCPeerConnection(configuration);
+
+        // adding event listeners for icecandidate
+        const iceCandidates = [];
+        localConnection.addEventListener('icecandidate', (event) => {
+            if (event.candidate)
+                iceCandidates.push(event.candidate);
+            else setTimeout(() => {
+                console.log('icecandidate search complete');
+                answerBox.value = JSON.stringify({
+                    description: localConnection.localDescription,
+                    icecandidates: iceCandidates
+                });
+                answerBox.setAttribute('readonly', 'true');
+            }, 100);
+        });
+
+        // creating the local videochannel
+        const constraint = {
+            audio: true,
+            video: true,
+        };
+        navigator.mediaDevices.getUserMedia(constraint)
+            .then((stream) => {
+                outBox.srcObject = stream;
+                stream.getTracks().forEach(track => {
+                    localConnection.addTrack(track, stream);
+                })
+            }).catch((err) => {
+                console.log(err);
+                alert("Some error occured!!!");
+            });
+
+        // capturing the remote videochannel
+        localConnection.addEventListener('track', async (event) => {
+            console.log('Receiver: media channel opened');
+            const [remoteStream] = event.streams;
+            inBox.srcObject = remoteStream;
+        });
+
+        confirmButton.onclick = (event) => {
+            const { description, icecandidates } = JSON.parse(offerBox.value);
+            offerBox.setAttribute('readonly', 'true');
+
+            // accepting the offer
+            localConnection.setRemoteDescription(description).then(() => { console.log("Receiver: offer accepted") });
+
+            // adding proposed icecandidates
+            icecandidates.forEach(candidate => {
+                localConnection.addIceCandidate(new RTCIceCandidate(candidate));
+            });
+            localConnection.createAnswer().then((answer) => localConnection.setLocalDescription(answer)).then(() => { console.log("Receiver: answer initiated") });
+
+        };
+
+
+
+        (function () {
   var old = console.log;
   var logger = document.querySelector(".chat");
   console.log = function (message) {
@@ -11,52 +119,3 @@
     }
   };
 })();
-document.querySelector(".send_response").disabled = true;
-
-var remoteConnection;
-document.querySelector(".offer_entered").addEventListener("click", async () => {
-  // console.log("here at peer b");
-  const offer = JSON.parse(document.getElementById("remote_address").value);
-  // console.log(offer);
-  remoteConnection = await new RTCPeerConnection();
-  remoteConnection.onicecandidate = (e) => {
-    // console.log(" NEW ice candidnat!! on localconnection reprinting SDP ");
-    // console.log(JSON.stringify(remoteConnection.localDescription));
-    const local_address = document.getElementById("local_address");
-    local_address.value = JSON.stringify(remoteConnection.localDescription);
-  };
-  var receiveChannel;
-  remoteConnection.ondatachannel = (e) => {
-    receiveChannel = e.channel;
-    receiveChannel.onmessage = (e) =>
-      console.log("Message Recieved From Device A : " + e.data);
-    receiveChannel.onopen = (e) => {
-      console.log("Communication Established Now you can Chat !!!");
-      document.querySelector(".send_response").disabled = false;
-    };
-    receiveChannel.onclose = (e) => {
-      console.log("closed!!!!!!");
-    };
-    remoteConnection.channel = receiveChannel;
-  };
-  // console.log(typeof offer + offer);
-  await remoteConnection.setRemoteDescription(offer);
-
-  //create answer
-  await remoteConnection
-    .createAnswer()
-    .then((a) => remoteConnection.setLocalDescription(a))
-    .then((a) => {
-      // console.log(JSON.stringify(remoteConnection.localDescription));
-    });
-  //send the answer to the client
-});
-
-document.querySelector(".send_response").addEventListener("click", async () => {
-  const response = document.getElementById("chat_text").value;
-  const text = document.createElement("div");
-  text.innerHTML =
-    "Message Sent By You : " + document.getElementById("chat_text").value;
-  document.querySelector(".chat").appendChild(text);
-  remoteConnection.channel.send(response);
-});
