@@ -2,6 +2,7 @@ const offerBox = document.querySelector("#local_address");
 const answerBox = document.querySelector("#remote_address");
 const inBox = document.querySelector("#incoming");
 const outBox = document.querySelector("#outgoing");
+const generateOffer = document.querySelector(".generate_offer");
 const confirmButton = document.querySelector(".accept_answer");
 
 const configuration = {
@@ -101,7 +102,8 @@ sendChannel.onopen = (e) => {
   document.querySelector(".send_response").disabled = false;
 };
 sendChannel.onclose = (e) => console.log("closed!!!!!!");
-setTimeout(() => {
+
+generateOffer.onclick = (event) => {
   // creating an offer for the new datachannel
 
   localConnection
@@ -112,7 +114,7 @@ setTimeout(() => {
     .then(() => {
       console.log("Sender: offer initiated");
     });
-}, 1000);
+};
 confirmButton.onclick = (event) => {
   const { description, icecandidates } = JSON.parse(answerBox.value);
   answerBox.setAttribute("readonly", "true");
