@@ -14,11 +14,11 @@ const configuration = {
       username: "openrelayproject",
       credential: "openrelayproject",
     },
-    {
-      urls: "turn:openrelay.metered.ca:443",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
+    // {
+    //   urls: "turn:openrelay.metered.ca:443",
+    //   username: "openrelayproject",
+    //   credential: "openrelayproject",
+    // },
     // {
     //   urls: "turn:openrelay.metered.ca:443?transport=tcp",
     //   username: "openrelayproject",
@@ -44,11 +44,11 @@ const configuration = {
     //   credential: "homeo",
     //   username: "homeo",
     // },
-    {
-      url: "turn:turn.anyfirewall.com:443?transport=tcp",
-      credential: "webrtc",
-      username: "webrtc",
-    },
+    // {
+    //   url: "turn:turn.anyfirewall.com:443?transport=tcp",
+    //   credential: "webrtc",
+    //   username: "webrtc",
+    // },
   ],
 };
 const remoteConnection = new RTCPeerConnection(configuration);
