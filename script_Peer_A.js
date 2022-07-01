@@ -148,4 +148,4 @@ document.querySelector(".send_response").addEventListener("click", async () => {
 	sendChannel.send(response);
 });
 
-export { localConnection };
+// export { localConnection };
